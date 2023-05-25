@@ -19,7 +19,8 @@ class FileContentProvider(ABC):
 
 def convert_parsed_paths_to_queries_and_cases(
         paths: dict,
-        file_content_provider: FileContentProvider):
+    file_content_provider: FileContentProvider) \
+        -> List[TestQuery]:
 
     queries = []
     for query_name, query_data in paths.items():
