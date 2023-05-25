@@ -1,6 +1,6 @@
 import unittest
 
-from docker_inspect import get_host_port_from_docker_inspect_output
+from db_container import get_host_port_from_docker_inspect_output
 
 docker_inspect_output = '''
 [
