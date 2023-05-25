@@ -1,4 +1,6 @@
+deepdiff==6.3.0
 greenlet==2.0.2
+ordered-set==4.1.0
 psycopg2-binary==2.9.6
 SQLAlchemy==2.0.15
 typing_extensions==4.6.1

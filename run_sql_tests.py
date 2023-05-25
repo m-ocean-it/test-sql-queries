@@ -6,6 +6,8 @@ from typing import List, Optional
 import psycopg2
 import sqlalchemy
 
+from models import TestCase, TestQuery
+
 setUpSchemaFilePath = "tests/query_0/setUpSchema.sql"
 setUpDataFilePath = "tests/query_0/case_0/setUpData.sql"
 setUpTargetFilePath = "tests/query_0/case_0/setUpTarget.sql"
@@ -27,20 +29,6 @@ mapped_port = 9999
 set_up_db = f"docker run --name test-sql-db -e POSTGRES_PASSWORD={db_password} -p {mapped_port}:5432 -d --rm postgres"
 check_db_health = "docker exec test-sql-db pg_isready -U postgres -d postgres"
 tear_down_db = "docker stop test-sql-db"
-
-
-@dataclass
-class TestCase:
-    data_set_up_command: str
-    target_set_up_command: str
-    name: Optional[str] = None
-
-
-@dataclass
-class TestQuery:
-    sql: str
-    cases: List[TestCase]
-    schema_set_up_command: str
 
 
 cases = [
