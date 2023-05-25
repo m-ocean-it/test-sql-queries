@@ -1,22 +1,7 @@
-import subprocess
-import time
-
 import psycopg2
 
-from docker_inspect import get_port_of_docker_container
+from db_container import DbContainer
 from get_test_data import get_queries_and_cases
-
-db_password = "mypassword"
-
-set_up_db = f"docker run -e POSTGRES_PASSWORD={db_password} -p 0:5432 -d --rm postgres"
-
-
-def check_db_health_cmd(container_id):
-    return f"docker exec {container_id} pg_isready -U postgres -d postgres"
-
-
-def tear_down_db_cmd(container_id) -> str:
-    return f"docker stop {container_id}"
 
 
 test_queries = get_queries_and_cases()
@@ -25,34 +10,17 @@ test_queries = get_queries_and_cases()
 for test_query in test_queries:
     for case in test_query.cases:
         print(f'Setting up a DB for {test_query.name}.{case.name}')
-
-        process_result = subprocess.run(set_up_db.split(),
-                                        check=True, capture_output=True)
-        container_id = process_result.stdout.decode('utf-8')
-        mapped_port = get_port_of_docker_container(container_id)
+        db = DbContainer()
         try:
             print('Waiting for DB to be ready...')
-            healthcheck_count = 0
-            while True:
-                if healthcheck_count > 20:
-                    raise TimeoutError
-                print(f'Healthcheck #{healthcheck_count+1}')
-                proc = subprocess.run(check_db_health_cmd(container_id).split(),
-                                      capture_output=True, check=False)
-                if proc.returncode == 0:
-                    print("    DB ready!")
-                    break
-                print('    DB not ready yet')
-                healthcheck_count += 1
-                time.sleep(1)
-
+            db.wait_until_ready()
             print('Connected!')
 
             with psycopg2.connect(database="postgres",
                                   host="localhost",
                                   user="postgres",
-                                  password=db_password,
-                                  port=mapped_port) as conn:
+                                  password=db.db_password,
+                                  port=db.mapped_port) as conn:
 
                 cursor = conn.cursor()
 
@@ -85,5 +53,4 @@ for test_query in test_queries:
             print('Errored during testing')
         finally:
             print('Tearing down the DB...')
-            subprocess.run(tear_down_db_cmd(container_id).split(),
-                           check=True, capture_output=True)
+            db.stop()
