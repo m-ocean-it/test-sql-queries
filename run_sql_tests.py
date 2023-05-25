@@ -1,20 +1,19 @@
 import psycopg2
+from termcolor import colored
 
 from db_container import DbContainer
 from get_test_data import get_queries_and_cases
 
+queries_to_test = get_queries_and_cases()
 
-test_queries = get_queries_and_cases()
 
-
-for test_query in test_queries:
+for test_query in queries_to_test:
+    print('query:', f'"{test_query.name}"')
     for case in test_query.cases:
-        print(f'Setting up a DB for {test_query.name}.{case.name}')
+        print('    case:', f'"{case.name}"', end=' ', flush=True)
         db = DbContainer()
         try:
-            print('Waiting for DB to be ready...')
             db.wait_until_ready()
-            print('Connected!')
 
             with psycopg2.connect(database="postgres",
                                   host="localhost",
@@ -46,11 +45,11 @@ for test_query in test_queries:
                 cursor.execute(queryTargetSql)
                 expected = cursor.fetchall()
 
-                print(result)
-                print(expected)
-                print(result == expected)
+                if result == expected:
+                    print(colored('✔', 'green'))
+                else:
+                    print(colored('✘', 'red'))
         except Exception:
-            print('Errored during testing')
+            print(colored('✘', 'red'), '(errored before the test)')
         finally:
-            print('Tearing down the DB...')
             db.stop()
