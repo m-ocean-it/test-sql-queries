@@ -1,9 +1,10 @@
-from typing import List
-from dataclasses import dataclass
+import subprocess
 import time
+from dataclasses import dataclass
+from typing import List, Optional
+
 import psycopg2
 import sqlalchemy
-import subprocess
 
 setUpSchemaFilePath = "tests/query_0/setUpSchema.sql"
 setUpDataFilePath = "tests/query_0/case_0/setUpData.sql"
@@ -24,6 +25,7 @@ db_password = "mypassword"
 mapped_port = 9999
 
 set_up_db = f"docker run --name test-sql-db -e POSTGRES_PASSWORD={db_password} -p {mapped_port}:5432 -d --rm postgres"
+check_db_health = "docker exec test-sql-db pg_isready -U postgres -d postgres"
 tear_down_db = "docker stop test-sql-db"
 
 
@@ -31,6 +33,7 @@ tear_down_db = "docker stop test-sql-db"
 class TestCase:
     data_set_up_command: str
     target_set_up_command: str
+    name: Optional[str] = None
 
 
 @dataclass
@@ -44,7 +47,9 @@ cases = [
     TestCase(data_set_up_command=setUpDataSql,
              target_set_up_command=setUpTargetSql)
 ]
-test_query = TestQuery(sql=querySql, cases=cases, schema_set_up_command=setUpSchemaSql)
+test_query = TestQuery(sql=querySql,
+                       cases=cases,
+                       schema_set_up_command=setUpSchemaSql)
 test_queries = [test_query]
 
 
@@ -53,9 +58,22 @@ for test_query in test_queries:
         print(f'Setting up a DB for test case #{i}...')
         subprocess.run(set_up_db.split(), check=True, capture_output=True)
         try:
-            sleep_seconds = 4
-            print(f'Sleeping for {sleep_seconds} seconds...')
-            time.sleep(4)
+            print('Waiting for DB to be ready...')
+            healthcheck_count = 0
+            while True:
+                if healthcheck_count > 20:
+                    raise TimeoutError
+                print(f'Healthcheck #{healthcheck_count+1}')
+                proc = subprocess.run(check_db_health.split(),
+                                      capture_output=True, check=False)
+                if proc.returncode == 0:
+                    print("    DB ready!")
+                    break
+                print('    DB not ready yet')
+                healthcheck_count += 1
+                time.sleep(1)
+
+            print('Connected!')
 
             with psycopg2.connect(database="postgres",
                                   host="localhost",
@@ -90,6 +108,8 @@ for test_query in test_queries:
                 print(result)
                 print(expected)
                 print(result == expected)
+        except Exception:
+            print('Errored during testing')
         finally:
             print('Tearing down the DB...')
             subprocess.run(tear_down_db.split(),
