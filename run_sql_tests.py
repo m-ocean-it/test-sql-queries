@@ -1,14 +1,10 @@
 import subprocess
 import time
-from dataclasses import dataclass
-from typing import List, Optional
 
 import psycopg2
-import sqlalchemy
 
 from docker_inspect import get_port_of_docker_container
 from get_test_data import get_queries_and_cases
-from models import TestCase, TestQuery
 
 db_password = "mypassword"
 
