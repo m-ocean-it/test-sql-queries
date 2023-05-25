@@ -1,6 +1,5 @@
 from deepdiff import DeepDiff
 import unittest
-from models import TestCase, TestQuery
 from list_cases import parse_paths_from_os_walk
 
 input_data = [
@@ -81,10 +80,3 @@ class TestParsing(unittest.TestCase):
             DeepDiff(
                 parse_paths_from_os_walk(input_data),
                 target))
-
-# target = [
-#     TestQuery(sql="", schema_set_up_command="", name="", cases=[
-#        TestCase(data_set_up_command="", target_set_up_command="", name=""),
-#        TestCase(data_set_up_command="", target_set_up_command="", name="")
-#     ])
-# ]
