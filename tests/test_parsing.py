@@ -1,6 +1,6 @@
 from deepdiff import DeepDiff
 import unittest
-from list_cases import parse_paths_from_os_walk
+from get_test_data import parse_paths_from_os_walk
 
 input_data = [
     [

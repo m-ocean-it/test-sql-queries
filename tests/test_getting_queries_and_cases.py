@@ -3,7 +3,7 @@ from typing import List
 
 from deepdiff import DeepDiff
 
-from list_cases import (FileContentProvider,
+from get_test_data import (FileContentProvider,
                         convert_parsed_paths_to_queries_and_cases)
 from models import TestCase, TestQuery
 
