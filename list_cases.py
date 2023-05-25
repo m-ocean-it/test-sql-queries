@@ -1,4 +1,5 @@
 import os
+from abc import ABC, abstractmethod
 from typing import List
 
 from models import TestCase, TestQuery
@@ -11,8 +12,37 @@ def run():
     print(paths)
 
 
-def convert_parsed_paths_to_queries_and_cases(paths):
-    pass
+class FileContentProvider(ABC):
+    @abstractmethod
+    def get_file_content(self, path: str): ...
+
+
+def convert_parsed_paths_to_queries_and_cases(
+        paths: dict,
+        file_content_provider: FileContentProvider):
+
+    queries = []
+    for query_name, query_data in paths.items():
+        q = TestQuery(
+            name=query_name,
+            sql=file_content_provider.get_file_content(
+                query_data['sql_file']),
+            schema_set_up_command=file_content_provider.get_file_content(
+                query_data['schema_set_up_file']),
+            cases=[
+                TestCase(
+                    name=case_name,
+                    data_set_up_command=file_content_provider.get_file_content(
+                        case_data['data_set_up_file']),
+                    target_set_up_command=file_content_provider.get_file_content(
+                        case_data['target_set_up_file']))
+                for case_name, case_data
+                in query_data['cases'].items()
+            ]
+        )
+        queries.append(q)
+
+    return queries
 
 
 def parse_paths_from_os_walk(os_walk_output):
