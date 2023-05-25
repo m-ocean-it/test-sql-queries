@@ -7,14 +7,23 @@ from models import TestCase, TestQuery
 TESTS_DIRECTORY = 'test_queries'
 
 
-def run():
-    paths = parse_paths_from_os_walk(os.walk(TESTS_DIRECTORY))
-    print(paths)
+def get_queries_and_cases():
+    test_queries = convert_parsed_paths_to_queries_and_cases(
+        parse_paths_from_os_walk(
+            os.walk(TESTS_DIRECTORY)),
+        file_content_provider=RealFileContentProvider())
+    return test_queries
 
 
 class FileContentProvider(ABC):
     @abstractmethod
-    def get_file_content(self, path: str): ...
+    def get_file_content(self, path: str) -> str:  ...
+
+
+class RealFileContentProvider(FileContentProvider):
+    def get_file_content(self, path: str) -> str:
+        with open(path, 'r') as f:
+            return f.read()
 
 
 def convert_parsed_paths_to_queries_and_cases(
@@ -77,7 +86,3 @@ def parse_paths_from_os_walk(os_walk_output):
             raise AssertionError
 
     return result
-
-
-if __name__ == '__main__':
-    run()
